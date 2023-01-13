@@ -1,18 +1,29 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
+[Serializable]
 public class Island : IEnumerable
 {
-    List<GridTile> _tiles = new(4);
+    public List<GridTile> _tiles;
 
-    public List<GridTile> getItems()
+    public Island(int size)
     {
-        return _tiles;
+        _tiles = new(size);
     }
+
+    public List<GridTile> GetItems() => _tiles;
+
+    public int Size => _tiles.Count;
 
     public void AddItem(GridTile item)
     {
-        this._tiles.Add(item);
+        _tiles.Add(item);
+    }
+
+    public void RemoveItem(GridTile item)
+    {
+        _tiles.Remove(item);
     }
 
     public IEnumerator GetEnumerator()
@@ -31,12 +42,12 @@ public class IslandIterator : IEnumerator
         _island = island;
     }
 
-    public object Current => _island.getItems()[_position];
+    public object Current => _island.GetItems()[_position];
 
     public bool MoveNext()
     {
         _position++;
-        return _position < _island.getItems().Count;
+        return _position < _island.GetItems().Count;
     }
 
     public void Reset()

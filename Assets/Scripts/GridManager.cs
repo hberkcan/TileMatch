@@ -5,55 +5,82 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 
 public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 {
-	public int SizeX, SizeY;
-	public float CellSize;
+	[SerializeField] private GameData gameData;
+	//public int SizeX, SizeY;
+	//public float CellSize;
 
 	[SerializeField] private GridTile[] Prefabs;
 	private GridController<GridTile> _gridController;
 	private GridTile _selected;
 
 	private HashSet<GridTile> checkedGridTiles;
-	private int island = 0;
+	public HashSet<Island> Islands = new(16);
+
+	public static event Action BoardUpdated;
 
 	//[Inject]
 	//public void Inject(GridController<GridTile> gridController) {
 	//	_gridController = gridController;
 	//}
 
-	public void Awake()
+	private void Awake()
 	{
-		_gridController = new GridController<GridTile>(this, new Coord(SizeX, SizeY));
-		checkedGridTiles = new HashSet<GridTile>(SizeX * SizeY);
+		_gridController = new GridController<GridTile>(this, new Coord(gameData.SizeX, gameData.SizeY));
+		checkedGridTiles = new HashSet<GridTile>(gameData.SizeX * gameData.SizeY);
 	}
 
 	private void Start()
 	{
-		UUBaby();
-    }
+		//StartCoroutine(
+		//        UpdateBoardCoroutine());
+
+		DetectIslandsOnBoard();
+		BoardUpdated?.Invoke();
+	}
 
 	public GridTile CreateTile(Coord coord)
 	{
-		var random = Random.Range(0, 6);
+		var random = Random.Range(0, gameData.ColorCount);
 		GridTile tile = Instantiate(Prefabs[random], Coord2Position(coord), Quaternion.identity, transform);
 		//tile.transform.localScale = Vector3.zero;
 		tile.Type = random;
 		//tile.transform.DOScale(Vector3.one, .25f);
 		tile.Clicked = TileClicked;
+		tile.UpdateLayerOrder();
 		return tile;
 	}
 
 	public void MoveTile(GridTile tile, Coord coord)
 	{
-		tile.transform.DOLocalMove(Coord2Position(coord), .25f).OnComplete(() => tile.transform.DOPunchPosition(Vector3.up * .4f, .2f));
+		tile.transform.DOLocalMove(Coord2Position(coord), .25f).OnComplete(() =>
+		{
+			tile.transform.DOPunchPosition(Vector3.up * .4f, .2f);
+			tile.UpdateLayerOrder();
+		});
+
+		Island island = tile.GetIsland;
+		if (island != null)
+        {
+			DiscardIsland(tile);
+			return;
+        }
+
+		checkedGridTiles.Remove(tile);
 	}
 
 	public void RemoveTile(GridTile tile)
 	{
 		tile.transform.DOScale(0, .25f).OnComplete(() => Destroy(tile.gameObject));
 	}
+
+	public void UncheckTile(GridTile tile)
+    {
+
+    }
 
 	[Button]
 	public void TestFill()
@@ -66,48 +93,49 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 	{
 		GridTile[] tiles = GetComponentsInChildren<GridTile>();
 		GridTile target = tiles[Random.Range(0, tiles.Length)];
-		_gridController.Remove(target);
+        _gridController.Remove(target);
 		_gridController.Step();
 	}
 
+	[Button]
+	public void TestShuffle()
+    {
+        foreach (GridTile gridTile in _gridController.Grid)
+        {
+			gridTile.SetIsland(null);
+        }
+		Islands.Clear();
+        ShuffleBoard();
+    }
+
 	private Vector3 Coord2Position(Coord coord)
 	{
-		var offset = new Vector3((SizeX - 1) * CellSize * .5f, (SizeY - 1) * CellSize * .5f, 0);
-		return new Vector3(coord.X * CellSize, coord.Y * CellSize, 0) - offset;
+		var offset = new Vector3((gameData.SizeX - 1) * gameData.CellSize * .5f, (gameData.SizeY - 1) * gameData.CellSize * .5f, 0);
+		return new Vector3(coord.X * gameData.CellSize, coord.Y * gameData.CellSize, 0) - offset;
 	}
 
 	private void TileClicked(GridTile tile)
 	{
-		//if (_selected == null) {
-		//	_selected = tile;
-		//	return;
-		//}
-
-		//if (tile == _selected) {
-		//	_selected = null;
-		//	return;
-		//}
-
-		//_selected = _gridController.Swap(_selected, tile) ? null : tile;
-		//HashSet<GridTile> tilesInIsland = new HashSet<GridTile>(SizeX * SizeY);
 		_selected = tile;
-		//FindIsland(_selected, ref tilesInIsland);
-		//Debug.Log(tilesInIsland.Count);
-		Debug.Log(_selected.name);
-        HashSet<GridTile> kek = new HashSet<GridTile>(SizeX * SizeY);
 
-        foreach (GridTile t in FindIsland(_selected, ref kek))
+		if(_selected.GetIsland == null)
         {
-            _gridController.Remove(t);
-        };
+			_selected = null;
+			return;
+        }
 
-        kek.Clear();
-        _gridController.Step();
-        _gridController.Fill();
-        _selected = null;
-		checkedGridTiles.Clear();
-		UUBaby();
-    }
+        DestroyIsland(_selected.GetIsland);
+
+		_gridController.Step();
+		_gridController.Fill();
+		_selected = null;
+
+        //StartCoroutine(
+        //        UpdateBoardCoroutine());
+
+		DetectIslandsOnBoard();
+		BoardUpdated?.Invoke();
+	}
 
 	private HashSet<GridTile> FindIsland(GridTile gridTile, ref HashSet<GridTile> tilesInIsland)
 	{
@@ -115,43 +143,155 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 		{
 			if (t.Type == gridTile.Type && tilesInIsland.Add(t))
 			{
-				t.kek = island;
-				FindIsland(t, ref tilesInIsland);
+				tilesInIsland.Add(gridTile);
+
+                if (t.GetIsland != null && checkedGridTiles.Contains(t))
+                {
+					//AddTileToIsland(gridTile, t.GetIsland);
+
+					//foreach (GridTile g in t.GetIsland)
+					//{
+					//    tilesInIsland.Add(g);
+					//}
+
+					//newIsland = false;
+					tilesInIsland.UnionWith(t.GetIsland.GetItems());
+					//continue;
+					DiscardIsland(t);
+                }
+
+                FindIsland(t, ref tilesInIsland);
 			}
 		}
 
 		return tilesInIsland;
 	}
 
-	private void UUBaby()
+	private void DetectIslandsOnBoard()
     {
-		HashSet<GridTile> tilesInIsland = new HashSet<GridTile>(SizeX * SizeY);
+		HashSet<GridTile> refSet = new(gameData.SizeX * gameData.SizeY);
 
-		foreach (GridTile gt in _gridController.Grid)
+		foreach (GridTile gridTile in _gridController.Grid)
 		{
-			gt.UpdateLayerOrder();
-
-			if (checkedGridTiles.Contains(gt))
+			if (!checkedGridTiles.Add(gridTile))
 				continue;
 
-			HashSet<GridTile> lol = FindIsland(gt, ref tilesInIsland);
+			refSet.Clear();
+			var tilesInIsland = FindIsland(gridTile, ref refSet);
 
-			if (lol.Count > 0)
+   //         if (!newIsland)
+   //         {
+			//	//foreach (GridTile gt in tilesInIsland)
+			//	//{
+			//	//	checkedGridTiles.Add(gt);
+			//	//}
+
+			//	//refSet.Clear();
+			//	//gridTile.UpdateLayerOrder();
+			//	//gridTile.UpdateIcon();
+			//	continue;
+			//}
+
+			if (tilesInIsland.Count > 1)
 			{
-				island++;
-				Island ýsland = new();
+				Island island = CreateIsland(tilesInIsland.Count);
 
-				foreach (GridTile lele in lol)
-				{
-					lele.UpdateIcon(lol.Count);
-					lele.island = ýsland;
-				}
+				foreach (GridTile gt in tilesInIsland)
+                {
+					AddTileToIsland(gt, island);
+					//gt.UpdateIcon();
+                }
 
-				checkedGridTiles.UnionWith(lol);
-				tilesInIsland.Clear();
+				//refSet.Clear();
 			}
 
-			checkedGridTiles.Add(gt);
+            //gridTile.UpdateLayerOrder();
+            //gridTile.UpdateIcon();
+        }
+
+        StartCoroutine(
+                UpdateBoardCoroutine());
+    }
+
+	private Island CreateIsland(int size)
+    {
+		Island island = new(size);
+		Islands.Add(island);
+		return island;
+    }
+
+	private void DestroyIsland(Island island)
+    {
+		int size = island.Size;
+		for (int i = size - 1; i >= 0; i--)
+		{
+			GridTile gridTile = island.GetItems()[i];
+			checkedGridTiles.Remove(gridTile);
+			_gridController.Remove(gridTile);
 		}
+
+		Islands.Remove(island);
+    }
+
+	private void AddTileToIsland(GridTile tile, Island island)
+    {
+		island.AddItem(tile);
+		tile.SetIsland(island);
+		checkedGridTiles.Add(tile);
+    }
+
+	private void DiscardIsland(GridTile tile)
+    {
+		//Island island = tile.GetIsland;
+		//island.RemoveItem(tile);
+		//tile.SetIsland(null);
+		//checkedGridTiles.Remove(tile);
+
+		//if(island.GetSize() == 1)
+		//      {
+		//	GridTile gt = island.GetItems()[0];
+		//	gt.SetIsland(null);
+		//	checkedGridTiles.Remove(gt);
+
+		//	islands.Remove(island);
+		//      }
+
+		Island island = tile.GetIsland;
+
+		foreach(GridTile t in island)
+        {
+			t.SetIsland(null);
+			checkedGridTiles.Remove(t);
+			//t.UpdateIcon();
+        }
+
+		Islands.Remove(island);
+    }
+
+	public IEnumerator UpdateBoardCoroutine()
+    {
+		yield return new WaitForSeconds(.25f);
+		//DetectIslandsOnBoard();
+		//BoardUpdated?.Invoke();
+		//foreach (GridTile gridTile in _gridController.Grid)
+		//{
+		//    gridTile.UpdateLayerOrder();
+		//    gridTile.UpdateIcon();
+		//}
+		CheckDeadlock();
+    }
+
+	private void CheckDeadlock()
+    {
+		if (Islands.Count == 0)
+			ShuffleBoard();
+    }
+
+	private void ShuffleBoard()
+    {
+		_gridController.Shuffle();
+		checkedGridTiles.Clear();
+        DetectIslandsOnBoard();
+		BoardUpdated?.Invoke();
 	}
 }

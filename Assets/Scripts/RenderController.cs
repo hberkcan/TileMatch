@@ -4,50 +4,42 @@ using UnityEngine;
 
 public class RenderController : MonoBehaviour
 {
-    private GridTile gridTile;
     private SpriteRenderer spriteRenderer;
 
     [SerializeField] private IconContainer iconContainer;
-    [SerializeField] private int A, B, C;
+    [SerializeField] private GameData gameData;
 
     private void Awake()
     {
-        gridTile = GetComponent<GridTile>();
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    private void OnEnable()
-    {
-        gridTile.UpdateIconEvent += GridTile_UpdateIconEvent;
-        gridTile.UpdateLayerOrderEvent += GridTile_UpdateLayerOrderEvent;
-    }
-
-    private void GridTile_UpdateLayerOrderEvent()
+    public void UpdateLayerOrder()
     {
         spriteRenderer.sortingOrder = (int)transform.position.y;
     }
 
-    private void GridTile_UpdateIconEvent(int count)
+    public void UpdateIcon(int islandSize)
     {
         int i = 0;
 
-        if (count <= A)
+        if (islandSize <= gameData.FirstIconThreshold)
         {
             i = 0;
         }
-        else if (A < count && count <= B)
+        else if (gameData.FirstIconThreshold < islandSize && islandSize <= gameData.SecondIconThreshold)
         {
             i = 1;
         }
-        else if (B < count && count <= C)
+        else if (gameData.SecondIconThreshold < islandSize && islandSize <= gameData.ThirdIconThreshold)
         {
             i = 2;
         }
-        else if (C < count)
+        else if (gameData.ThirdIconThreshold < islandSize)
         {
             i = 3;
         }
 
-        spriteRenderer.sprite = iconContainer.sprites[i];
+        spriteRenderer.sprite = iconContainer.Sprites[i];
     }
 }

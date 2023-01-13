@@ -5,5 +5,5 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Container", menuName = "Icon Container")]
 public class IconContainer : ScriptableObject
 {
-    public Sprite[] sprites;
+    public Sprite[] Sprites;
 }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0fc8fd3203fe26499ff0ddb2fe9c8fb, type: 3}
   m_Name: BlueContainer
   m_EditorClassIdentifier: 
-  sprites:
+  Sprites:
   - {fileID: 21300000, guid: b108cf8c1e8b7de479aad43b7d12a97f, type: 3}
   - {fileID: 21300000, guid: 3a3e8b94713260147a95b0ab6602fc78, type: 3}
   - {fileID: 21300000, guid: 2a016a37281098f4c886b1ecdb185a0e, type: 3}

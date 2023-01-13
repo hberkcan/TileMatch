@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0fc8fd3203fe26499ff0ddb2fe9c8fb, type: 3}
   m_Name: RedContainer
   m_EditorClassIdentifier: 
-  sprites:
+  Sprites:
   - {fileID: 21300000, guid: 3ceced2ab2c591c4886c298fa6a12628, type: 3}
   - {fileID: 21300000, guid: 0603955c0fab3ad4c82d97440f0789f4, type: 3}
   - {fileID: 21300000, guid: 39c3e610532bf6a448286713c5ef604b, type: 3}

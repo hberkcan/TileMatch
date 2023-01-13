@@ -321,9 +321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 444398b8689b8d249bb79a26f7244946, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SizeX: 6
-  SizeY: 6
-  CellSize: 2.2
+  gameData: {fileID: 11400000, guid: 40018bc7209c13c42bff01d963d544d5, type: 2}
   Prefabs:
   - {fileID: -2325748643125326449, guid: bce0b0177f9140148b786a541c89feda, type: 3}
   - {fileID: -7995825636345446410, guid: 76f893b4e538c634da0e63aeab0ea0e5, type: 3}

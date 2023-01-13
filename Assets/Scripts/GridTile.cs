@@ -5,23 +5,54 @@ using UnityEngine.EventSystems;
 public class GridTile : MonoBehaviour, ITile, IPointerClickHandler {
 	public int Type { get; set; }
 	public Action<GridTile> Clicked;
-	public event Action<int> UpdateIconEvent;
-	public event Action UpdateLayerOrderEvent;
+	private Island _island;
 
-	public Island island;
-	public int kek = -1;
-		
-	public void OnPointerClick(PointerEventData eventData) {
+    private RenderController renderController;
+
+    private void Awake()
+    {
+        renderController = GetComponent<RenderController>();
+    }
+
+    private void OnEnable()
+    {
+        GridManager.BoardUpdated += GridManager_BoardUpdated;
+    }
+
+    private void GridManager_BoardUpdated()
+    {
+        UpdateIcon();
+    }
+
+    public void OnPointerClick(PointerEventData eventData) {
 		Clicked?.Invoke(this);
 	}
 
-	public void UpdateIcon(int count)
+	public void SetIsland(Island island)
     {
-		UpdateIconEvent?.Invoke(count);
+		_island = island;
     }
 
-	public void UpdateLayerOrder()
+    public Island GetIsland => _island;
+
+    public void UpdateLayerOrder()
     {
-		UpdateLayerOrderEvent?.Invoke();
+        renderController.UpdateLayerOrder();
+    }
+
+    public void UpdateIcon()
+    {
+        if(_island != null)
+        {
+            renderController.UpdateIcon(_island.Size);
+            return;
+        }
+
+        renderController.UpdateIcon(0);
+    }
+
+    private void OnDestroy()
+    {
+        GridManager.BoardUpdated -= GridManager_BoardUpdated;
     }
 }

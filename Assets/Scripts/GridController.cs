@@ -30,9 +30,23 @@ public class GridController<T> where T : class, ITile {
 		}
 	}
 
+	public void Shuffle()
+    {
+		List<T> copiedGrid = new(Grid);
+
+		for (int i = 0; i < Grid.Length / 2; i++)
+		{
+			var a = copiedGrid[UnityEngine.Random.Range(0, copiedGrid.Count)];
+			copiedGrid.Remove(a);
+			var b = copiedGrid[UnityEngine.Random.Range(0, copiedGrid.Count)];
+			copiedGrid.Remove(b);
+			Swap(a, b);
+		}
+	}
+
 	public bool Swap(T a, T b) {
-		LinkedList<T> adjacentTiles = GetAdjacentTiles(a);
-		if (!adjacentTiles.Contains(b)) return false;
+		//LinkedList<T> adjacentTiles = GetAdjacentTiles(a);
+		//if (!adjacentTiles.Contains(b)) return false;
 		var aIndex = Array.IndexOf(Grid, a);
 		var bIndex = Array.IndexOf(Grid, b);
 		Grid[bIndex] = a;

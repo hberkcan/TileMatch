@@ -125,7 +125,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2a994dc26ab436583977a6b7e20547c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  kek: -1
 --- !u!114 &4233727828544627108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +138,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   iconContainer: {fileID: 11400000, guid: 9fd2f2d47d210e8439f7a4f9b1455a7f, type: 2}
-  A: 4
-  B: 7
-  C: 9
+  gameData: {fileID: 11400000, guid: 40018bc7209c13c42bff01d963d544d5, type: 2}
