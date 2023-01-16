@@ -6,6 +6,7 @@ public class GridController<T> where T : class, ITile {
 		T CreateTile(Coord coord);
 		void RemoveTile(T tile);
 		void MoveTile(T a,  Coord coord);
+		void FreeTile(T a);
 	}
 		
 	private readonly Coord[] _offsets = {new Coord(-1, 0), new Coord(0, 1), new Coord(1, 0), new Coord(0, -1)};
@@ -45,8 +46,6 @@ public class GridController<T> where T : class, ITile {
 	}
 
 	public bool Swap(T a, T b) {
-		//LinkedList<T> adjacentTiles = GetAdjacentTiles(a);
-		//if (!adjacentTiles.Contains(b)) return false;
 		var aIndex = Array.IndexOf(Grid, a);
 		var bIndex = Array.IndexOf(Grid, b);
 		Grid[bIndex] = a;
@@ -94,6 +93,7 @@ public class GridController<T> where T : class, ITile {
 				Grid[i] = Grid[j];
 				Grid[j] = null;
 				_gridManager.MoveTile(Grid[i], IndexToCoord(i));
+				_gridManager.FreeTile(Grid[i]);
 				break;
 			}
 		}

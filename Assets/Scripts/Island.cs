@@ -2,10 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-[Serializable]
 public class Island : IEnumerable
 {
-    public List<GridTile> _tiles;
+    private List<GridTile> _tiles;
 
     public Island(int size)
     {

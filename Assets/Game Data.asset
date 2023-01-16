@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4881dd4a50e44374fbbd262bfc00200d, type: 3}
   m_Name: Game Data
   m_EditorClassIdentifier: 
-  SizeX: 5
-  SizeY: 5
+  SizeX: 10
+  SizeY: 10
   CellSize: 2.2
   ColorCount: 6
   FirstIconThreshold: 4

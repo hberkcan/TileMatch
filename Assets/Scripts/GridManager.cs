@@ -1,7 +1,6 @@
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-//using Zenject;
 using Random = UnityEngine.Random;
 using System.Collections.Generic;
 using System;
@@ -10,22 +9,15 @@ using System.Collections;
 public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 {
 	[SerializeField] private GameData gameData;
-	//public int SizeX, SizeY;
-	//public float CellSize;
 
 	[SerializeField] private GridTile[] Prefabs;
 	private GridController<GridTile> _gridController;
 	private GridTile _selected;
 
 	private HashSet<GridTile> checkedGridTiles;
-	public HashSet<Island> Islands = new(16);
+	private HashSet<Island> Islands = new(16);
 
 	public static event Action BoardUpdated;
-
-	//[Inject]
-	//public void Inject(GridController<GridTile> gridController) {
-	//	_gridController = gridController;
-	//}
 
 	private void Awake()
 	{
@@ -35,11 +27,7 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 
 	private void Start()
 	{
-		//StartCoroutine(
-		//        UpdateBoardCoroutine());
-
 		DetectIslandsOnBoard();
-		BoardUpdated?.Invoke();
 	}
 
 	public GridTile CreateTile(Coord coord)
@@ -61,15 +49,6 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 			tile.transform.DOPunchPosition(Vector3.up * .4f, .2f);
 			tile.UpdateLayerOrder();
 		});
-
-		Island island = tile.GetIsland;
-		if (island != null)
-        {
-			DiscardIsland(tile);
-			return;
-        }
-
-		checkedGridTiles.Remove(tile);
 	}
 
 	public void RemoveTile(GridTile tile)
@@ -77,10 +56,16 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 		tile.transform.DOScale(0, .25f).OnComplete(() => Destroy(tile.gameObject));
 	}
 
-	public void UncheckTile(GridTile tile)
+	public void FreeTile(GridTile tile)
     {
+		if (tile.GetIsland != null)
+		{
+			DiscardIsland(tile);
+			return;
+		}
 
-    }
+		checkedGridTiles.Remove(tile);
+	}
 
 	[Button]
 	public void TestFill()
@@ -130,11 +115,7 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 		_gridController.Fill();
 		_selected = null;
 
-        //StartCoroutine(
-        //        UpdateBoardCoroutine());
-
 		DetectIslandsOnBoard();
-		BoardUpdated?.Invoke();
 	}
 
 	private HashSet<GridTile> FindIsland(GridTile gridTile, ref HashSet<GridTile> tilesInIsland)
@@ -147,16 +128,7 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 
                 if (t.GetIsland != null && checkedGridTiles.Contains(t))
                 {
-					//AddTileToIsland(gridTile, t.GetIsland);
-
-					//foreach (GridTile g in t.GetIsland)
-					//{
-					//    tilesInIsland.Add(g);
-					//}
-
-					//newIsland = false;
 					tilesInIsland.UnionWith(t.GetIsland.GetItems());
-					//continue;
 					DiscardIsland(t);
                 }
 
@@ -179,19 +151,6 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 			refSet.Clear();
 			var tilesInIsland = FindIsland(gridTile, ref refSet);
 
-   //         if (!newIsland)
-   //         {
-			//	//foreach (GridTile gt in tilesInIsland)
-			//	//{
-			//	//	checkedGridTiles.Add(gt);
-			//	//}
-
-			//	//refSet.Clear();
-			//	//gridTile.UpdateLayerOrder();
-			//	//gridTile.UpdateIcon();
-			//	continue;
-			//}
-
 			if (tilesInIsland.Count > 1)
 			{
 				Island island = CreateIsland(tilesInIsland.Count);
@@ -199,18 +158,14 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 				foreach (GridTile gt in tilesInIsland)
                 {
 					AddTileToIsland(gt, island);
-					//gt.UpdateIcon();
                 }
-
-				//refSet.Clear();
 			}
-
-            //gridTile.UpdateLayerOrder();
-            //gridTile.UpdateIcon();
         }
 
-        StartCoroutine(
-                UpdateBoardCoroutine());
+        BoardUpdated?.Invoke();
+
+		StartCoroutine(
+                CheckDeadlockCoroutine());
     }
 
 	private Island CreateIsland(int size)
@@ -242,42 +197,21 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 
 	private void DiscardIsland(GridTile tile)
     {
-		//Island island = tile.GetIsland;
-		//island.RemoveItem(tile);
-		//tile.SetIsland(null);
-		//checkedGridTiles.Remove(tile);
-
-		//if(island.GetSize() == 1)
-		//      {
-		//	GridTile gt = island.GetItems()[0];
-		//	gt.SetIsland(null);
-		//	checkedGridTiles.Remove(gt);
-
-		//	islands.Remove(island);
-		//      }
-
 		Island island = tile.GetIsland;
 
 		foreach(GridTile t in island)
         {
 			t.SetIsland(null);
 			checkedGridTiles.Remove(t);
-			//t.UpdateIcon();
         }
 
 		Islands.Remove(island);
     }
 
-	public IEnumerator UpdateBoardCoroutine()
+	public IEnumerator CheckDeadlockCoroutine()
     {
 		yield return new WaitForSeconds(.25f);
-		//DetectIslandsOnBoard();
-		//BoardUpdated?.Invoke();
-		//foreach (GridTile gridTile in _gridController.Grid)
-		//{
-		//    gridTile.UpdateLayerOrder();
-		//    gridTile.UpdateIcon();
-		//}
+		
 		CheckDeadlock();
     }
 
@@ -292,6 +226,5 @@ public class GridManager : MonoBehaviour, GridController<GridTile>.IGridManager
 		_gridController.Shuffle();
 		checkedGridTiles.Clear();
         DetectIslandsOnBoard();
-		BoardUpdated?.Invoke();
 	}
 }
